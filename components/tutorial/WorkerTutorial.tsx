@@ -62,11 +62,15 @@ export default function WorkerTutorial({ userId }: Props) {
   const [visible, setVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const mountedRef = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
     checkShouldShow();
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [userId]);
 
   const checkShouldShow = async () => {
@@ -75,7 +79,7 @@ export default function WorkerTutorial({ userId }: Props) {
       const seen = await AsyncStorage.getItem(key);
       if (!seen && mountedRef.current) {
         // Small delay to let the layout settle
-        setTimeout(() => {
+        timerRef.current = setTimeout(() => {
           if (mountedRef.current) setVisible(true);
         }, 800);
       }

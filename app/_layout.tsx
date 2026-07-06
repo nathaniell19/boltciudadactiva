@@ -29,7 +29,7 @@ export default function RootLayout() {
           <Stack.Screen name="auth/callback" />
           <Stack.Screen name="(worker)" />
           <Stack.Screen name="(company)" />
-          <Stack.Screen name="company" />
+          <Stack.Screen name="company/[id]" />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

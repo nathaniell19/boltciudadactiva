@@ -71,7 +71,7 @@ export default function CompanyProfileScreen() {
 
   const handleFollow = async () => {
     if (!user) {
-      router.push('/(auth)/login');
+      router.push('/login');
       return;
     }
 

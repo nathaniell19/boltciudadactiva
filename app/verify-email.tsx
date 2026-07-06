@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated,
-  Image, TextInput, KeyboardAvoidingView, Platform, ScrollView,
+  TextInput, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CheckCircle, Mail } from 'lucide-react-native';
@@ -35,6 +35,16 @@ export default function VerifyEmailScreen() {
   const successScale = useRef(new Animated.Value(0)).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const mountedRef = useRef(true);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
@@ -52,7 +62,8 @@ export default function VerifyEmailScreen() {
       Animated.spring(successScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }),
       Animated.timing(successOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
     ]).start(() => {
-      setTimeout(() => {
+      navTimerRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
         if (role === 'trabajador') {
           router.replace('/worker-signup-profile' as any);
         } else {

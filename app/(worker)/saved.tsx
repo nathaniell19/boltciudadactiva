@@ -108,8 +108,9 @@ export default function SavedScreen() {
           </Text>
         </View>
         <TouchableOpacity style={styles.removeBtn} onPress={async () => {
-          await supabase.from('saved_items').delete().eq('id', item.id);
-          fetchSavedItems();
+          const { error } = await supabase.from('saved_items').delete().eq('id', item.id);
+          if (!error) fetchSavedItems();
+          else console.error('Error removing saved item:', error);
         }}>
           <Bookmark size={22} color={theme.colors.primary[500]} fill={theme.colors.primary[500]} />
         </TouchableOpacity>

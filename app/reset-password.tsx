@@ -35,6 +35,16 @@ export default function ResetPasswordVerifyScreen() {
   const successScale = useRef(new Animated.Value(0)).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const mountedRef = useRef(true);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
@@ -130,7 +140,8 @@ export default function ResetPasswordVerifyScreen() {
       Animated.spring(successScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }),
       Animated.timing(successOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
     ]).start(() => {
-      setTimeout(() => {
+      navTimerRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
         router.replace('/login');
       }, 2000);
     });
