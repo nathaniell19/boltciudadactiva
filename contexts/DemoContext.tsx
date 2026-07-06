@@ -11,21 +11,32 @@ interface DemoContextType {
   isDemoAlertVisible: boolean;
   exitDemoMode: () => void;
   getDemoRole: () => 'worker' | 'company' | null;
+  isDevMode: boolean;
+  devMode: 'dev-worker' | 'dev-company' | null;
+  setDevMode: (mode: 'dev-worker' | 'dev-company') => void;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [demoMode, setDemoModeState] = useState<DemoModeType>(null);
+  const [devMode, setDevModeState] = useState<'dev-worker' | 'dev-company' | null>(null);
   const [isDemoAlertVisible, setIsDemoAlertVisible] = useState(false);
 
   const setDemoMode = useCallback((mode: DemoModeType) => {
     setDemoModeState(mode);
   }, []);
 
-  const showDemoAlert = useCallback(() => {
-    setIsDemoAlertVisible(true);
+  const setDevMode = useCallback((mode: 'dev-worker' | 'dev-company') => {
+    setDevModeState(mode);
+    setDemoModeState(null);
   }, []);
+
+  const showDemoAlert = useCallback(() => {
+    // Don't show alert in dev mode
+    if (devMode) return;
+    setIsDemoAlertVisible(true);
+  }, [devMode]);
 
   const hideDemoAlert = useCallback(() => {
     setIsDemoAlertVisible(false);
@@ -33,12 +44,15 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const exitDemoMode = useCallback(() => {
     setDemoModeState(null);
+    setDevModeState(null);
     setIsDemoAlertVisible(false);
   }, []);
 
   const getDemoRole = useCallback(() => {
-    return demoMode;
-  }, [demoMode]);
+    if (devMode === 'dev-worker' || demoMode === 'worker') return 'worker';
+    if (devMode === 'dev-company' || demoMode === 'company') return 'company';
+    return null;
+  }, [demoMode, devMode]);
 
   const value: DemoContextType = {
     demoMode,
@@ -49,6 +63,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     isDemoAlertVisible,
     exitDemoMode,
     getDemoRole,
+    isDevMode: devMode !== null,
+    devMode,
+    setDevMode,
   };
 
   return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;

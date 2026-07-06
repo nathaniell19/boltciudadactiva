@@ -14,7 +14,7 @@ export default function WorkerHomeScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { user, profile } = useAuth();
-  const { isDemo } = useDemo();
+  const { isDemo, isDevMode } = useDemo();
   const { checkAndProceed } = useDemoRestriction();
   const [refreshing, setRefreshing] = useState(false);
   const [jobs, setJobs] = useState<any[]>([]);
@@ -25,8 +25,8 @@ export default function WorkerHomeScreen() {
   const workerProfile = profile as any;
 
   // Demo mode mock data
-  const displayName = isDemo ? 'Usuario Demo' : (workerProfile?.first_name || 'Usuario');
-  const displayPhoto = isDemo ? null : workerProfile?.photo_url;
+  const displayName = (isDemo || isDevMode) ? 'Usuario Demo' : (workerProfile?.first_name || 'Usuario');
+  const displayPhoto = (isDemo || isDevMode) ? null : workerProfile?.photo_url;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -80,10 +80,10 @@ export default function WorkerHomeScreen() {
     fetchHomeData();
   }, []);
 
-  const stats = isDemo ? [
+  const stats = (isDemo || isDevMode) ? [
     { label: 'Empleos nuevos', value: '15', color: theme.colors.primary[500] },
-    { label: 'Explorando', value: '1', color: theme.colors.secondary[500] },
-    { label: 'Modo demo', value: 'Activo', color: theme.colors.success[500] },
+    { label: isDevMode ? 'Desarrollo' : 'Explorando', value: '1', color: theme.colors.secondary[500] },
+    { label: isDevMode ? 'Modo dev' : 'Modo demo', value: 'Activo', color: theme.colors.success[500] },
   ] : [
     { label: 'Empleos nuevos', value: '15', color: theme.colors.primary[500] },
     { label: 'Postulaciones', value: '3', color: theme.colors.secondary[500] },

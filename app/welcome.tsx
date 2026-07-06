@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated, Pressable, Dimensions, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDemo } from '@/contexts/DemoContext';
+import { User, Building2 } from 'lucide-react-native';
 
 const PRIMARY = '#1976D2';
 const TEXT_PRIMARY = '#1A1A2E';
@@ -11,6 +13,7 @@ const MAX_WIDTH = Math.min(width - 48, 400);
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { setDevMode } = useDemo();
 
   const logoAnim = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
@@ -139,6 +142,36 @@ export default function WelcomeScreen() {
               onPress={() => router.push('/explore')}
             />
           </Animated.View>
+
+          {/* Development Section - TEMPORARY */}
+          <View style={styles.devSection}>
+            <Text style={styles.devSectionTitle}>Modo Desarrollo</Text>
+            <Text style={styles.devSectionDesc}>Acceso directo para pruebas</Text>
+
+            <View style={styles.devButtons}>
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={() => {
+                  setDevMode('dev-worker');
+                  router.push('/(worker)');
+                }}
+              >
+                <User size={20} color={PRIMARY} />
+                <Text style={styles.devButtonText}>Trabajador</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={() => {
+                  setDevMode('dev-company');
+                  router.push('/(company)');
+                }}
+              >
+                <Building2 size={20} color={PRIMARY} />
+                <Text style={styles.devButtonText}>Empresa</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -219,5 +252,42 @@ const styles = StyleSheet.create({
   },
   buttonGap: {
     height: 12,
+  },
+  devSection: {
+    marginTop: 60,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    width: '100%',
+    alignItems: 'center',
+  },
+  devSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888888',
+    marginBottom: 4,
+  },
+  devSectionDesc: {
+    fontSize: 12,
+    color: '#AAAAAA',
+    marginBottom: 16,
+  },
+  devButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  devButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 8,
+  },
+  devButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: TEXT_PRIMARY,
   },
 });

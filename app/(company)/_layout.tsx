@@ -30,7 +30,7 @@ export default function CompanyLayout() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, profile, signOut } = useAuth();
-  const { isDemo, exitDemoMode, showDemoAlert } = useDemo();
+  const { isDemo, isDevMode, exitDemoMode, showDemoAlert } = useDemo();
   const { unreadCount } = useNotifications();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentRoute, setCurrentRoute] = useState('/(company)');
@@ -38,7 +38,7 @@ export default function CompanyLayout() {
   const companyProfile = profile as any;
 
   const handleNavigate = (route: string, requiresAuth?: boolean) => {
-    if (isDemo && requiresAuth) {
+    if (isDemo && requiresAuth && !isDevMode) {
       showDemoAlert();
       setDrawerOpen(false);
       return;
@@ -49,7 +49,7 @@ export default function CompanyLayout() {
   };
 
   const handleSignOut = async () => {
-    if (isDemo) {
+    if (isDemo || isDevMode) {
       exitDemoMode();
       router.replace('/welcome');
       return;
@@ -59,8 +59,8 @@ export default function CompanyLayout() {
   };
 
   // Demo mode mock data
-  const displayName = isDemo ? 'Empresa Demo' : (companyProfile?.name || 'Mi Empresa');
-  const displayLogo = isDemo ? null : companyProfile?.logo_url;
+  const displayName = (isDemo || isDevMode) ? 'Empresa Demo' : (companyProfile?.name || 'Mi Empresa');
+  const displayLogo = (isDemo || isDevMode) ? null : companyProfile?.logo_url;
 
   const DrawerContent = () => (
     <View style={[styles.drawer, { backgroundColor: theme.colors.background }]}>
@@ -74,10 +74,10 @@ export default function CompanyLayout() {
         </TouchableOpacity>
 
         {/* Demo Badge */}
-        {isDemo && (
+        {(isDemo || isDevMode) && (
           <View style={styles.demoBadge}>
             <Eye size={12} color="#FFFFFF" />
-            <Text style={styles.demoBadgeText}>MODO DEMO</Text>
+            <Text style={styles.demoBadgeText}>{isDevMode ? 'MODO DEV' : 'MODO DEMO'}</Text>
           </View>
         )}
 
@@ -127,12 +127,12 @@ export default function CompanyLayout() {
             >
               {item.label}
             </Text>
-            {item.requiresAuth && isDemo && (
+            {item.requiresAuth && isDemo && !isDevMode && (
               <View style={styles.lockIcon}>
                 <Text style={styles.lockIconText}>🔐</Text>
               </View>
             )}
-            {item.id === 'messages' && unreadCount > 0 && !isDemo && (
+            {item.id === 'messages' && unreadCount > 0 && !isDemo && !isDevMode && (
               <Badge text={unreadCount.toString()} variant="error" size="sm" />
             )}
             <ChevronRight size={18} color={theme.colors.textTertiary} />
@@ -149,9 +149,9 @@ export default function CompanyLayout() {
         >
           <Settings size={22} color={theme.colors.textSecondary} />
           <Text style={[styles.menuLabel, { color: theme.colors.text }]}>
-            Configuración
+            Configuracion
           </Text>
-          {isDemo && (
+          {isDemo && !isDevMode && (
             <View style={styles.lockIcon}>
               <Text style={styles.lockIconText}>🔐</Text>
             </View>
@@ -178,7 +178,7 @@ export default function CompanyLayout() {
         >
           <LogOut size={22} color={theme.colors.error[500]} />
           <Text style={[styles.menuLabel, { color: theme.colors.error[500] }]}>
-            {isDemo ? 'Salir del modo demo' : 'Cerrar sesión'}
+            {(isDemo || isDevMode) ? 'Salir del modo demo' : 'Cerrar sesion'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -195,11 +195,18 @@ export default function CompanyLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-        {/* Demo Mode Banner */}
-        {isDemo && (
+        {/* Demo Mode Banner - Only show in demo mode, not dev mode */}
+        {isDemo && !isDevMode && (
           <View style={styles.demoBanner}>
             <Eye size={14} color="#FFFFFF" />
-            <Text style={styles.demoBannerText}>Modo demostración - Algunas acciones requieren registro</Text>
+            <Text style={styles.demoBannerText}>Modo demostracion - Algunas acciones requieren registro</Text>
+          </View>
+        )}
+
+        {/* Dev Mode Banner */}
+        {isDevMode && (
+          <View style={[styles.devBanner, { backgroundColor: '#FF6B6B' }]}>
+            <Text style={styles.devBannerText}>MODO DESARROLLO - Acceso completo habilitado</Text>
           </View>
         )}
 
@@ -221,7 +228,7 @@ export default function CompanyLayout() {
             onPress={() => router.push('/(company)/notifications')}
           >
             <Bell size={24} color={theme.colors.text} />
-            {unreadCount > 0 && !isDemo && (
+            {unreadCount > 0 && !isDemo && !isDevMode && (
               <View style={[styles.badgeDot, { backgroundColor: theme.colors.error[500] }]}>
                 <Text style={styles.badgeText}>{unreadCount}</Text>
               </View>
@@ -246,7 +253,7 @@ export default function CompanyLayout() {
         <Slot />
 
         {/* First-time tutorial */}
-        {user && !isDemo && <CompanyTutorial userId={user.id} />}
+        {user && !isDemo && !isDevMode && <CompanyTutorial userId={user.id} />}
 
         {/* Demo Alert Modal */}
         <DemoAlert />
@@ -272,6 +279,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '500',
+  },
+  devBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  devBannerText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   header: {
     flexDirection: 'row',

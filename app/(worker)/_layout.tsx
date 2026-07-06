@@ -34,13 +34,13 @@ export default function WorkerLayout() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, profile, signOut } = useAuth();
-  const { isDemo, exitDemoMode, showDemoAlert } = useDemo();
+  const { isDemo, isDevMode, exitDemoMode, showDemoAlert } = useDemo();
   const { unreadCount } = useNotifications();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentRoute, setCurrentRoute] = useState('/(worker)');
 
   const handleNavigate = (route: string, requiresAuth?: boolean) => {
-    if (isDemo && requiresAuth) {
+    if (isDemo && requiresAuth && !isDevMode) {
       showDemoAlert();
       setDrawerOpen(false);
       return;
@@ -51,7 +51,7 @@ export default function WorkerLayout() {
   };
 
   const handleSignOut = async () => {
-    if (isDemo) {
+    if (isDemo || isDevMode) {
       exitDemoMode();
       router.replace('/welcome');
       return;
@@ -70,9 +70,9 @@ export default function WorkerLayout() {
   const workerProfile = profile as any;
 
   // Demo mode mock data
-  const displayName = isDemo ? 'Usuario Demo' : (workerProfile?.first_name || 'Usuario');
-  const displayEmail = isDemo ? 'demo@ejemplo.com' : user?.email;
-  const displayPhoto = isDemo ? null : workerProfile?.photo_url;
+  const displayName = (isDemo || isDevMode) ? 'Usuario Demo' : (workerProfile?.first_name || 'Usuario');
+  const displayEmail = (isDemo || isDevMode) ? 'demo@ejemplo.com' : user?.email;
+  const displayPhoto = (isDemo || isDevMode) ? null : workerProfile?.photo_url;
 
   const DrawerContent = () => (
     <View style={[styles.drawer, { backgroundColor: theme.colors.background }]}>
@@ -86,17 +86,17 @@ export default function WorkerLayout() {
         </TouchableOpacity>
 
         {/* Demo Badge */}
-        {isDemo && (
+        {(isDemo || isDevMode) && (
           <View style={styles.demoBadge}>
             <Eye size={12} color="#FFFFFF" />
-            <Text style={styles.demoBadgeText}>MODO DEMO</Text>
+            <Text style={styles.demoBadgeText}>{isDevMode ? 'MODO DEV' : 'MODO DEMO'}</Text>
           </View>
         )}
 
         <View style={styles.drawerProfile}>
           <Avatar
             source={displayPhoto}
-            name={isDemo ? 'Demo' : (workerProfile ? `${workerProfile.first_name} ${workerProfile.last_name}` : user?.email)}
+            name={(isDemo || isDevMode) ? 'Demo' : (workerProfile ? `${workerProfile.first_name} ${workerProfile.last_name}` : user?.email)}
             size={60}
           />
           <View style={styles.drawerProfileInfo}>
@@ -132,12 +132,12 @@ export default function WorkerLayout() {
             >
               {item.label}
             </Text>
-            {item.requiresAuth && isDemo && (
+            {item.requiresAuth && isDemo && !isDevMode && (
               <View style={styles.lockIcon}>
-                <Text style={styles.lockIconText}>({item.requiresAuth && isDemo ? '🔒' : ''})</Text>
+                <Text style={styles.lockIconText}>🔒</Text>
               </View>
             )}
-            {item.id === 'messages' && unreadCount > 0 && !isDemo && (
+            {item.id === 'messages' && unreadCount > 0 && !isDemo && !isDevMode && (
               <Badge text={unreadCount.toString()} variant="error" size="sm" />
             )}
             <ChevronRight size={18} color={theme.colors.textTertiary} />
@@ -168,7 +168,7 @@ export default function WorkerLayout() {
             >
               {item.label}
             </Text>
-            {item.requiresAuth && isDemo && (
+            {item.requiresAuth && isDemo && !isDevMode && (
               <View style={styles.lockIcon}>
                 <Text style={styles.lockIconText}>🔒</Text>
               </View>
@@ -199,7 +199,7 @@ export default function WorkerLayout() {
         >
           <LogOut size={22} color={theme.colors.error[500]} />
           <Text style={[styles.menuLabel, { color: theme.colors.error[500] }]}>
-            {isDemo ? 'Salir del modo demo' : 'Cerrar sesión'}
+            {(isDemo || isDevMode) ? 'Salir del modo demo' : 'Cerrar sesión'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -216,11 +216,18 @@ export default function WorkerLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-        {/* Demo Mode Banner */}
-        {isDemo && (
+        {/* Demo Mode Banner - Only show in demo mode, not dev mode */}
+        {isDemo && !isDevMode && (
           <View style={styles.demoBanner}>
             <Eye size={14} color="#FFFFFF" />
             <Text style={styles.demoBannerText}>Modo demostración - Algunas acciones requieren registro</Text>
+          </View>
+        )}
+
+        {/* Dev Mode Banner */}
+        {isDevMode && (
+          <View style={[styles.devBanner, { backgroundColor: '#FF6B6B' }]}>
+            <Text style={styles.devBannerText}>MODO DESARROLLO - Acceso completo habilitado</Text>
           </View>
         )}
 
@@ -242,7 +249,7 @@ export default function WorkerLayout() {
             onPress={() => router.push('/(worker)/notifications')}
           >
             <Bell size={24} color={theme.colors.text} />
-            {unreadCount > 0 && !isDemo && (
+            {unreadCount > 0 && !isDemo && !isDevMode && (
               <View style={[styles.badgeDot, { backgroundColor: theme.colors.error[500] }]}>
                 <Text style={styles.badgeText}>{unreadCount}</Text>
               </View>
@@ -267,7 +274,7 @@ export default function WorkerLayout() {
         <Slot />
 
         {/* First-time tutorial */}
-        {user && !isDemo && <WorkerTutorial userId={user.id} />}
+        {user && !isDemo && !isDevMode && <WorkerTutorial userId={user.id} />}
 
         {/* Demo Alert Modal */}
         <DemoAlert />
@@ -293,6 +300,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '500',
+  },
+  devBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  devBannerText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   header: {
     flexDirection: 'row',
